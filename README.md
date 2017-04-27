@@ -1,5 +1,7 @@
 # twitter-elk
-## Docker files for twitter
+Searches public twitter for keywords, writes the tweet data into an elasticsearch index (via logstash), and lets you graph/map the data with kibana. 
+
+## Docker files
 ### To start 
 - clone or fork project
 - go to: https://apps.twitter.com/ and create a new app and get consumer/oauth keys
