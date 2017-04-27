@@ -1,7 +1,8 @@
 version: '2'
 services:
-  elasticsearch:
+  elasticsearch-master:
     build: elasticsearch/
+    image: twitterelk/elasticsearch
     environment:
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
@@ -18,8 +19,31 @@ services:
     cap_add:
       - IPC_LOCK
     volumes:
-      - ./data:/usr/share/elasticsearch/data
-      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - ./data/master:/usr/share/elasticsearch/data
+    container_name: twitterelk_elasticsearch-master
+  elasticsearch-node:
+    image: twitterelk/elasticsearch
+    environment:
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    networks:
+      - docker_elk
+    depends_on:
+      - elasticsearch-master
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    mem_limit: 1g
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - ./data/node:/usr/share/elasticsearch/data
+    command: elasticsearch -E discovery.zen.ping.unicast.hosts=elasticsearch-master -E network.host=0.0.0.0 -E discovery.zen.minimum_master_nodes=1
+    container_name: twitterelk_elasticsearch-node
   logstash:
     build: logstash/
     command: -f /etc/logstash/conf.d/
@@ -28,17 +52,18 @@ services:
     networks:
       - docker_elk
     depends_on:
-      - elasticsearch
+      - elasticsearch-node
+    container_name: twitterelk_logstash
   kibana:
     build: kibana/
-    volumes:
-      - ./kibana/config/:/opt/kibana/config/
     ports:
       - "80:5601"
     networks:
       - docker_elk
     depends_on:
-      - elasticsearch
+      - elasticsearch-node
+    container_name: twitterelk_kibana
+    command: kibana -e http://elasticsearch-node:9200 
 volumes:
   data:
     driver: local
