@@ -54,6 +54,11 @@ services:
     depends_on:
       - elasticsearch-node
     container_name: twitterelk_logstash
+    environment:
+      - TWITTER_CONSUMER_KEY
+      - TWITTER_CONSUMER_SECRET
+      - TWITTER_OAUTH_SECRET
+      - TWITTER_OAUTH_TOKEN
   kibana:
     build: kibana/
     ports:
@@ -63,7 +68,7 @@ services:
     depends_on:
       - elasticsearch-node
     container_name: twitterelk_kibana
-    command: kibana -e http://elasticsearch-node:9200 
+    command: kibana -e http://elasticsearch-node:9200
 volumes:
   data:
     driver: local
